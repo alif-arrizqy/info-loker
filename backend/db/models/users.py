@@ -7,9 +7,8 @@ from db.base_class import Base
 class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, nullable=False, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-    owner_id = Column(Integer, ForeignKey("user.id"))
-    owner = relationship("Job", back_populates="owner")
+    jobs = relationship("Job", back_populates="owner")
