@@ -1,0 +1,29 @@
+{% extends "shared/base.html" %}
+
+{% block title %}
+<title>Home - info loker</title>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="text-danger font-weight-bold">
+            <h1>info loker</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for job in jobs %}
+            <div class="col-lg-4 col-md-3 col-sm-10 mr-auto">
+                {% with obj=job %}
+                {% include "components/cards.html" %}
+            {% endwith %}
+
+                {% if loop.index %3 %}
+                    </div>
+                {% else %}
+                    </div></div><br><div class="row">
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
