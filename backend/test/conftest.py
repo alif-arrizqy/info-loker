@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from typing import Any
 from typing import Generator
 
@@ -14,6 +14,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from db.base import Base
 from db.session import SQL_ALCHEMY_DATABASE_URL, get_db
 from apis.base import api_router
+from core.config import settings
+from utils.users import authentication_token_from_username
 
 
 def start_application():
@@ -29,29 +31,37 @@ engine = create_engine(
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def app() -> Generator[FastAPI, Any, None]:
-    Base.metadata.create_all(engine)  # create the tables
+    """
+    Create a fresh database on each test case.
+    """
+    Base.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
     Base.metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def db_session(app: FastAPI) -> Generator[SessionTesting, Any, None]:
-    conn = engine.connect()
-    transaction = conn.begin()
-    session = SessionTesting(bind=conn)
-    yield session
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = SessionTesting(bind=connection)
+    yield session  # use the session in tests.
     session.close()
     transaction.rollback()
-    conn.close()
+    connection.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def client(
     app: FastAPI, db_session: SessionTesting
 ) -> Generator[TestClient, Any, None]:
+    """
+    Create a new FastAPI TestClient that uses the `db_session` fixture to override
+    the `get_db` dependency that is injected into routes.
+    """
+
     def _get_test_db():
         try:
             yield db_session
@@ -61,3 +71,10 @@ def client(
     app.dependency_overrides[get_db] = _get_test_db
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture(scope="module")
+def normal_user_token_headers(client: TestClient, db_session: Session):
+    return authentication_token_from_username(
+        client=client, username=settings.TEST_USERNAME, db=db_session
+    )
