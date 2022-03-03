@@ -1,5 +1,5 @@
 # info-loker
-simple website for job seekers and job recruitment
+basic crud, jwt auth using FastAPI
 
 
 ## Technology Stack:
