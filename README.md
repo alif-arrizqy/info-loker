@@ -2,7 +2,7 @@
 basic crud, jwt auth using FastAPI
 
 
-## Technology Stack:
+## Technology Stack
 * FastAPI
 * Uvicorn (server)
 * Pytest
